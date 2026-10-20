@@ -2,7 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { PawPrint, Heart, ShieldCheck, Stethoscope } from 'lucide-react'
+import { PawPrint, Heart, ShieldCheck, Stethoscope, Sparkles } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -50,6 +50,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/food" className="hover:text-white transition-colors">
+                  Nutrição & Toxicidade
+                </Link>
+              </li>
+              <li>
                 <Link href="/weather" className="hover:text-white transition-colors">
                   Zeludi Clima & Conforto Térmico
                 </Link>
@@ -57,6 +62,12 @@ export function Footer() {
               <li>
                 <Link href="/ai" className="hover:text-white transition-colors">
                   Zeludi IA Assistente
+                </Link>
+              </li>
+              <li>
+                <Link href="/splash" className="hover:text-white text-[#829B83] transition-colors flex items-center gap-1.5 font-medium">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Ver Abertura Animada</span>
                 </Link>
               </li>
               <li>

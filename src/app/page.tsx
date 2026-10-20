@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { SplashScreen } from '@/components/splash/SplashScreen'
 import {
   PawPrint,
   HeartPulse,
@@ -64,6 +65,15 @@ export default function HomePage() {
   const router = useRouter()
   const { user, enableDemoMode } = useAuth()
   const [selectedPreview, setSelectedPreview] = useState(SPECIES_PREVIEWS[0])
+  const [showSplash, setShowSplash] = useState(false)
+
+  React.useEffect(() => {
+    // Show on first visit in the session
+    const seen = sessionStorage.getItem('zeludi_seen_session_splash')
+    if (!seen) {
+      setShowSplash(true)
+    }
+  }, [])
 
   const handleDemoAccess = () => {
     enableDemoMode()
@@ -72,6 +82,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5]">
+      {showSplash && (
+        <SplashScreen
+          onComplete={() => {
+            setShowSplash(false)
+            sessionStorage.setItem('zeludi_seen_session_splash', 'true')
+          }}
+        />
+      )}
       <Navbar />
 
       <main className="flex-1">
