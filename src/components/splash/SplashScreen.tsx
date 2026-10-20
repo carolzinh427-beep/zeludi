@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { PawPrint, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
 interface SplashScreenProps {
   onComplete?: () => void
@@ -16,23 +16,25 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
   const [isFadingOut, setIsFadingOut] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
 
-  // Control timing
+  // Timing: Exactly 5 seconds total (5000ms)
   useEffect(() => {
-    const isReturningUser = !forceFull && typeof window !== 'undefined' && localStorage.getItem('zeludi_seen_splash') === 'true'
-    
-    // Timing intervals (ms)
-    const stageDuration = isReturningUser ? 600 : 1100
-
     const timeouts: NodeJS.Timeout[] = []
 
-    timeouts.push(setTimeout(() => setStage('bird'), stageDuration * 1))
-    timeouts.push(setTimeout(() => setStage('cat'), stageDuration * 2))
-    timeouts.push(setTimeout(() => setStage('hamster'), stageDuration * 3))
-    timeouts.push(setTimeout(() => setStage('eagle'), stageDuration * 4))
-    timeouts.push(setTimeout(() => setStage('dissolve'), stageDuration * 5))
-    timeouts.push(setTimeout(() => setStage('logo'), stageDuration * 5.7))
+    // 0ms - 800ms: Dog profile
+    // 800ms - 1600ms: Bird profile
+    timeouts.push(setTimeout(() => setStage('bird'), 800))
+    // 1600ms - 2400ms: Cat profile
+    timeouts.push(setTimeout(() => setStage('cat'), 1600))
+    // 2400ms - 3200ms: Hamster profile
+    timeouts.push(setTimeout(() => setStage('hamster'), 2400))
+    // 3200ms - 4000ms: Eagle profile
+    timeouts.push(setTimeout(() => setStage('eagle'), 3200))
+    // 4000ms - 4200ms: Dissolve burst
+    timeouts.push(setTimeout(() => setStage('dissolve'), 4000))
+    // 4200ms - 5000ms: Zeludi logo reveal
+    timeouts.push(setTimeout(() => setStage('logo'), 4150))
 
-    const totalDuration = stageDuration * 7.5
+    // Exactly 5000ms: smooth fade-out and direct completion
     timeouts.push(
       setTimeout(() => {
         setIsFadingOut(true)
@@ -42,18 +44,19 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
             localStorage.setItem('zeludi_seen_splash', 'true')
           }
           if (onComplete) onComplete()
-        }, 700)
-      }, totalDuration)
+        }, 400)
+      }, 5000)
     )
 
-    // Progress bar animation
+    // Progress bar animation for 5000ms
     const startTime = Date.now()
+    const totalDuration = 5000
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime
       const pct = Math.min(100, Math.round((elapsed / totalDuration) * 100))
       setProgress(pct)
       if (pct >= 100) clearInterval(progressInterval)
-    }, 40)
+    }, 30)
 
     return () => {
       timeouts.forEach(clearTimeout)
@@ -79,14 +82,14 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
     }
     window.addEventListener('resize', handleResize)
 
-    // Particle pool
-    const particles = Array.from({ length: 45 }, () => ({
+    // Floating particles
+    const particles = Array.from({ length: 35 }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      radius: Math.random() * 3 + 1.2,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.8 - 0.3,
-      alpha: Math.random() * 0.45 + 0.15,
+      radius: Math.random() * 2.5 + 1,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.6 - 0.2,
+      alpha: Math.random() * 0.35 + 0.1,
       color: Math.random() > 0.5 ? '#829B83' : '#DCCBB5',
     }))
 
@@ -97,19 +100,19 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
       const gradient = ctx.createRadialGradient(
         width / 2,
         height / 2,
-        20,
+        30,
         width / 2,
         height / 2,
         Math.max(width, height) * 0.55
       )
       gradient.addColorStop(0, 'rgba(238, 243, 239, 0.85)')
-      gradient.addColorStop(0.6, 'rgba(245, 241, 232, 0.95)')
+      gradient.addColorStop(0.65, 'rgba(245, 241, 232, 0.95)')
       gradient.addColorStop(1, '#F5F1E8')
 
       ctx.fillStyle = gradient
       ctx.fillRect(0, 0, width, height)
 
-      // Draw floating particles
+      // Floating particles
       particles.forEach((p) => {
         p.x += p.vx
         p.y += p.vy
@@ -146,14 +149,21 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
         localStorage.setItem('zeludi_seen_splash', 'true')
       }
       if (onComplete) onComplete()
-    }, 400)
+    }, 300)
   }
 
   if (stage === 'finished') return null
 
+  const isAnimalStage =
+    stage === 'dog' ||
+    stage === 'bird' ||
+    stage === 'cat' ||
+    stage === 'hamster' ||
+    stage === 'eagle'
+
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col items-center justify-between p-6 select-none transition-opacity duration-700 bg-[#F5F1E8] ${
+      className={`fixed inset-0 z-50 flex flex-col items-center justify-between p-6 select-none transition-opacity duration-400 bg-[#F5F1E8] ${
         isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
     >
@@ -163,13 +173,8 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
         className="absolute inset-0 w-full h-full pointer-events-none"
       />
 
-      {/* Top Header: Brand mark + Skip button */}
-      <div className="relative z-10 w-full max-w-md flex items-center justify-between pt-2">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#829B83]">
-          <PawPrint className="w-4 h-4 text-[#829B83]" />
-          <span>Zeludi Experience</span>
-        </div>
-
+      {/* Top Header: Simple Skip Button */}
+      <div className="relative z-10 w-full max-w-md flex items-center justify-end pt-2">
         <button
           type="button"
           onClick={handleSkip}
@@ -183,262 +188,329 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
       {/* Center Animated Stage */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full max-w-sm">
         {/* Luminous Organic Circle Frame */}
-        <div className="relative w-72 h-72 sm:w-80 sm:h-80 rounded-full flex items-center justify-center">
+        <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full flex items-center justify-center">
           {/* Pulsing ring aura */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#829B83]/20 via-[#DCCBB5]/30 to-[#354A3D]/10 blur-xl animate-pulse" />
-          <div className="absolute inset-4 rounded-full border border-[#829B83]/30 bg-white/40 backdrop-blur-xs shadow-inner" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#829B83]/20 via-[#DCCBB5]/25 to-[#354A3D]/10 blur-xl animate-pulse" />
+          <div className="absolute inset-3 rounded-full border border-[#829B83]/25 bg-white/50 backdrop-blur-xs shadow-inner" />
 
-          {/* Morphing Animal Silhouettes */}
-          <div className="relative w-52 h-52 flex items-center justify-center">
-            {/* 1. DOG */}
+          {/* Morphing Animal Profiles with Ultra Smooth Crossfading */}
+          <div className="relative w-48 h-48 flex items-center justify-center">
+            {/* 1. DOG PROFILE */}
             <div
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-600 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                 stage === 'dog'
-                  ? 'opacity-100 scale-100 translate-y-0 rotate-0'
-                  : 'opacity-0 scale-75 -translate-y-3 pointer-events-none'
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
               }`}
             >
-              <svg
-                viewBox="0 0 200 200"
-                className="w-44 h-44 drop-shadow-md text-[#354A3D] fill-current"
-              >
-                {/* Elegant Retriever Dog Silhouette */}
-                <g>
-                  {/* Body & Chest */}
-                  <path d="M78 170 C78 170, 75 125, 92 110 C100 102, 115 105, 125 118 C136 132, 138 170, 138 170 Z" />
-                  {/* Legs */}
-                  <path d="M75 160 C75 160, 72 182, 80 185 C87 187, 92 178, 92 165 Z" />
-                  <path d="M124 165 C124 178, 128 187, 135 185 C142 182, 140 160, 140 160 Z" />
-                  {/* Back & Tail */}
-                  <path
-                    d="M135 150 C145 142, 160 135, 168 122 C172 115, 172 110, 166 112 C158 116, 148 126, 138 138 Z"
-                    className="origin-bottom-left animate-wiggle"
-                  />
-                  {/* Neck & Head */}
-                  <path d="M92 110 C92 100, 96 82, 100 70 C102 65, 108 60, 116 62 C124 64, 126 72, 128 85 C128 95, 122 108, 116 114 Z" />
-                  {/* Snout & Muzzle */}
-                  <path d="M100 70 C95 70, 75 75, 70 82 C68 85, 72 90, 80 90 C88 90, 98 84, 100 78 Z" />
-                  {/* Nose */}
-                  <circle cx="70" cy="80" r="3.5" fill="#829B83" />
-                  {/* Ear */}
-                  <path
-                    d="M116 62 C122 62, 132 75, 130 96 C128 102, 122 104, 120 98 C118 88, 116 75, 114 65 Z"
-                    fill="#28392F"
-                  />
-                  {/* Gentle Eye */}
-                  <circle cx="95" cy="73" r="2.5" fill="#F5F1E8" />
-                </g>
+              <svg viewBox="0 0 200 200" className="w-44 h-44 drop-shadow-sm overflow-visible">
+                <defs>
+                  <linearGradient id="dogGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#354A3D" />
+                    <stop offset="100%" stopColor="#25352C" />
+                  </linearGradient>
+                  <linearGradient id="dogEarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#829B83" />
+                    <stop offset="100%" stopColor="#354A3D" />
+                  </linearGradient>
+                </defs>
+
+                {/* Neck & Chest in Profile */}
+                <path
+                  d="M 68 175 C 72 145 76 120 86 102 C 92 90 98 82 108 78 C 118 74 134 78 148 90 C 158 98 162 104 162 110 C 160 114 152 116 142 115 C 132 114 126 122 120 135 C 114 148 116 162 124 175 Z"
+                  fill="url(#dogGrad)"
+                />
+
+                {/* Refined Muzzle & Head Contour */}
+                <path
+                  d="M 96 82 C 102 75 112 72 122 72 C 132 72 144 78 152 86 C 158 92 165 98 166 104 C 166 108 162 112 152 113 C 144 114 138 112 134 116 C 130 120 128 126 122 134 C 116 124 112 112 106 102 Z"
+                  fill="#354A3D"
+                />
+
+                {/* Sleek Drooping Ear in Profile */}
+                <path
+                  d="M 104 74 C 110 74 116 80 116 92 C 116 108 110 128 104 134 C 98 140 92 136 90 126 C 88 112 92 92 98 80 C 100 76 102 74 104 74 Z"
+                  fill="url(#dogEarGrad)"
+                />
+
+                {/* Nose Pad */}
+                <path
+                  d="M 162 100 C 166 101 167 105 165 108 C 163 110 159 110 157 107 C 156 104 158 101 162 100 Z"
+                  fill="#1E2822"
+                />
+
+                {/* Serene Eye in Profile */}
+                <path
+                  d="M 132 86 C 136 85 140 88 140 90 C 139 92 134 93 131 91 C 130 90 131 87 132 86 Z"
+                  fill="#F5F1E8"
+                />
+                <circle cx="134" cy="88.5" r="1.6" fill="#1E2822" />
+
+                {/* Delicate Collar Accent */}
+                <path
+                  d="M 88 155 Q 102 158 118 154"
+                  stroke="#829B83"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  fill="none"
+                />
               </svg>
             </div>
 
-            {/* 2. BIRD */}
+            {/* 2. BIRD PROFILE */}
             <div
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-600 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                 stage === 'bird'
-                  ? 'opacity-100 scale-100 translate-y-0 rotate-0'
-                  : 'opacity-0 scale-90 translate-y-4 pointer-events-none'
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
               }`}
             >
-              <svg
-                viewBox="0 0 200 200"
-                className="w-44 h-44 drop-shadow-md text-[#354A3D] fill-current animate-pulse-gentle"
-              >
-                {/* Graceful Bird in Flight */}
-                <g>
-                  {/* Body */}
-                  <path d="M85 105 C95 95, 115 95, 130 108 C140 117, 145 130, 155 140 C145 136, 130 128, 118 124 C105 120, 92 118, 85 105 Z" />
-                  {/* Head & Beak */}
-                  <path d="M85 105 C80 100, 75 92, 78 85 C82 78, 90 80, 95 86 C98 90, 98 96, 92 102 Z" />
-                  <path d="M75 87 L62 90 L74 93 Z" fill="#829B83" />
-                  {/* Eye */}
-                  <circle cx="82" cy="86" r="2" fill="#F5F1E8" />
-                  {/* Crest / Feathers */}
-                  <path d="M82 79 C82 72, 88 68, 89 65 C88 72, 86 76, 85 80 Z" fill="#829B83" />
-                  {/* Upward Flapping Wing */}
-                  <path
-                    d="M102 98 C102 98, 115 60, 138 45 C146 40, 148 46, 142 54 C134 65, 126 80, 120 98 Z"
-                    fill="#28392F"
-                  />
-                  {/* Secondary Wing */}
-                  <path
-                    d="M110 102 C110 102, 128 75, 155 64 C160 62, 160 68, 154 74 C142 86, 132 98, 124 105 Z"
-                    fill="#354A3D"
-                  />
-                  {/* Tail Feathers */}
-                  <path d="M145 132 L172 155 L158 142 L168 162 L148 138 Z" fill="#829B83" />
-                </g>
+              <svg viewBox="0 0 200 200" className="w-44 h-44 drop-shadow-sm overflow-visible">
+                <defs>
+                  <linearGradient id="birdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#354A3D" />
+                    <stop offset="100%" stopColor="#25352C" />
+                  </linearGradient>
+                  <linearGradient id="birdWingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#829B83" />
+                    <stop offset="100%" stopColor="#354A3D" />
+                  </linearGradient>
+                </defs>
+
+                {/* Body & Breast Profile */}
+                <path
+                  d="M 80 170 C 75 150 78 130 88 115 C 95 105 105 98 118 96 C 128 94 138 90 144 82 C 146 80 148 76 150 74 C 148 85 140 94 132 100 C 136 108 138 120 135 135 C 130 152 118 165 100 172 Z"
+                  fill="url(#birdGrad)"
+                />
+
+                {/* Sharp Elegant Beak */}
+                <path d="M 148 76 L 172 82 L 146 86 Z" fill="#D49E58" />
+
+                {/* Head & Crest */}
+                <path
+                  d="M 118 78 C 124 68 134 66 142 72 C 148 76 148 82 142 86 C 134 90 124 88 118 84 Z"
+                  fill="#354A3D"
+                />
+                <path
+                  d="M 124 72 C 120 60 110 52 100 48 C 112 55 118 64 122 70 Z"
+                  fill="#829B83"
+                />
+
+                {/* Eye in Profile */}
+                <circle cx="134" cy="78" r="3.2" fill="#F5F1E8" />
+                <circle cx="134.5" cy="78" r="1.8" fill="#1E2822" />
+
+                {/* Wing Arc Layer */}
+                <path
+                  d="M 94 118 C 104 112 118 115 124 126 C 128 138 122 154 105 168 C 100 155 98 140 94 118 Z"
+                  fill="url(#birdWingGrad)"
+                />
+
+                {/* Long Tail Feathers */}
+                <path
+                  d="M 82 165 L 65 192 L 74 168 L 58 190 L 78 160 Z"
+                  fill="#829B83"
+                />
               </svg>
             </div>
 
-            {/* 3. CAT */}
+            {/* 3. CAT PROFILE */}
             <div
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-600 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                 stage === 'cat'
-                  ? 'opacity-100 scale-100 translate-y-0 rotate-0'
-                  : 'opacity-0 scale-90 translate-y-3 pointer-events-none'
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
               }`}
             >
-              <svg
-                viewBox="0 0 200 200"
-                className="w-44 h-44 drop-shadow-md text-[#354A3D] fill-current"
-              >
-                {/* Elegant Sitting Cat Silhouette */}
-                <g>
-                  {/* Body */}
-                  <path d="M85 170 C85 140, 95 120, 105 105 C115 115, 125 140, 125 170 Z" />
-                  {/* Flank and curved rear leg */}
-                  <path d="M115 140 C130 145, 140 155, 140 170 C140 175, 110 175, 105 170 Z" />
-                  {/* Paws */}
-                  <ellipse cx="94" cy="172" rx="7" ry="4" fill="#28392F" />
-                  <ellipse cx="110" cy="172" rx="7" ry="4" fill="#28392F" />
-                  {/* Elegant Curving Tail */}
-                  <path
-                    d="M135 168 C155 168, 168 155, 168 140 C168 130, 160 128, 158 134 C158 142, 150 155, 132 158 Z"
-                    fill="#829B83"
-                  />
-                  {/* Head */}
-                  <circle cx="105" cy="85" r="22" />
-                  {/* Pointed Ears */}
-                  <path d="M90 75 L82 52 L98 68 Z" fill="#28392F" />
-                  <path d="M120 75 L128 52 L112 68 Z" fill="#28392F" />
-                  {/* Eyes (Feline Almond Shape) */}
-                  <ellipse cx="98" cy="84" rx="3.5" ry="2" fill="#F5F1E8" transform="rotate(-8 98 84)" />
-                  <ellipse cx="112" cy="84" rx="3.5" ry="2" fill="#F5F1E8" transform="rotate(8 112 84)" />
-                  <circle cx="98" cy="84" r="1.2" fill="#354A3D" />
-                  <circle cx="112" cy="84" r="1.2" fill="#354A3D" />
-                  {/* Cute Nose */}
-                  <polygon points="103,91 107,91 105,93" fill="#829B83" />
-                </g>
+              <svg viewBox="0 0 200 200" className="w-44 h-44 drop-shadow-sm overflow-visible">
+                <defs>
+                  <linearGradient id="catGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#354A3D" />
+                    <stop offset="100%" stopColor="#25352C" />
+                  </linearGradient>
+                  <linearGradient id="catEarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#829B83" />
+                    <stop offset="100%" stopColor="#354A3D" />
+                  </linearGradient>
+                </defs>
+
+                {/* Neck, Back & Chest Silhouette */}
+                <path
+                  d="M 65 175 C 70 148 76 128 88 112 C 96 102 102 96 110 92 C 116 88 124 88 135 94 C 144 100 150 106 150 110 C 148 114 142 115 135 116 C 128 117 122 124 118 136 C 114 150 116 164 122 175 Z"
+                  fill="url(#catGrad)"
+                />
+
+                {/* Head with Feline Snout Stop */}
+                <path
+                  d="M 96 82 C 102 78 112 78 122 80 C 130 82 140 88 146 95 C 150 100 152 105 148 108 C 142 110 136 109 130 112 C 126 115 124 122 118 128 C 110 118 105 106 98 94 Z"
+                  fill="#354A3D"
+                />
+
+                {/* Alert Triangular Pointed Ear */}
+                <path d="M 94 82 L 98 48 L 118 78 Z" fill="url(#catEarGrad)" />
+                <path d="M 98 78 L 102 56 L 114 76 Z" fill="#F5F1E8" opacity="0.25" />
+
+                {/* Cute Feline Nose */}
+                <path
+                  d="M 148 101 C 151 102 151 105 149 107 C 147 108 144 107 144 105 C 144 103 146 101 148 101 Z"
+                  fill="#829B83"
+                />
+
+                {/* Feline Almond Slit Eye in Profile */}
+                <path
+                  d="M 126 88 C 132 87 138 90 137 92 C 134 94 128 94 125 91 C 124 90 125 88 126 88 Z"
+                  fill="#F5F1E8"
+                />
+                <ellipse cx="131" cy="90.5" rx="1.2" ry="2.2" fill="#1E2822" />
+
+                {/* Minimalist Whisker Accents */}
+                <path
+                  d="M 142 108 Q 158 107 168 110 M 140 112 Q 156 114 165 119"
+                  stroke="#829B83"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  opacity="0.75"
+                  fill="none"
+                />
               </svg>
             </div>
 
-            {/* 4. HAMSTER */}
+            {/* 4. HAMSTER PROFILE */}
             <div
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-600 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                 stage === 'hamster'
-                  ? 'opacity-100 scale-100 translate-y-0 rotate-0'
-                  : 'opacity-0 scale-90 translate-y-3 pointer-events-none'
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
               }`}
             >
-              <svg
-                viewBox="0 0 200 200"
-                className="w-44 h-44 drop-shadow-md text-[#354A3D] fill-current"
-              >
-                {/* Round and adorable Hamster Silhouette */}
-                <g>
-                  {/* Chubby Round Body */}
-                  <ellipse cx="100" cy="125" rx="42" ry="36" />
-                  {/* Soft Belly Lightness */}
-                  <ellipse cx="100" cy="132" rx="26" ry="22" fill="#28392F" />
-                  {/* Tiny Front Paws */}
-                  <ellipse cx="90" cy="138" rx="5" ry="3" fill="#829B83" />
-                  <ellipse cx="110" cy="138" rx="5" ry="3" fill="#829B83" />
-                  {/* Round Head */}
-                  <circle cx="100" cy="92" r="26" />
-                  {/* Round Chubby Cheeks */}
-                  <ellipse cx="80" cy="98" rx="10" ry="8" />
-                  <ellipse cx="120" cy="98" rx="10" ry="8" />
-                  {/* Rounded Ears */}
-                  <circle cx="82" cy="72" r="8" fill="#28392F" />
-                  <circle cx="82" cy="72" r="4.5" fill="#829B83" />
-                  <circle cx="118" cy="72" r="8" fill="#28392F" />
-                  <circle cx="118" cy="72" r="4.5" fill="#829B83" />
-                  {/* Big Curious Eyes */}
-                  <circle cx="90" cy="90" r="4.5" fill="#F5F1E8" />
-                  <circle cx="90" cy="89" r="2.5" fill="#1E2822" />
-                  <circle cx="110" cy="90" r="4.5" fill="#F5F1E8" />
-                  <circle cx="110" cy="89" r="2.5" fill="#1E2822" />
-                  {/* Little Nose & Mouth */}
-                  <polygon points="98,97 102,97 100,99" fill="#829B83" />
-                </g>
+              <svg viewBox="0 0 200 200" className="w-44 h-44 drop-shadow-sm overflow-visible">
+                <defs>
+                  <linearGradient id="hamsterGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#354A3D" />
+                    <stop offset="100%" stopColor="#25352C" />
+                  </linearGradient>
+                </defs>
+
+                {/* Plump Curved Hunched Body */}
+                <path
+                  d="M 68 165 C 60 148 62 125 72 108 C 82 92 95 84 108 82 C 116 80 125 82 134 88 C 142 94 148 102 148 108 C 148 114 140 120 132 122 C 126 124 122 130 120 138 C 116 150 110 162 98 168 C 86 172 74 172 68 165 Z"
+                  fill="url(#hamsterGrad)"
+                />
+
+                {/* Soft Light Belly Patch */}
+                <path
+                  d="M 95 125 C 105 122 115 126 118 136 C 120 148 115 158 102 164 C 95 155 92 142 95 125 Z"
+                  fill="#829B83"
+                  opacity="0.4"
+                />
+
+                {/* Cute Round Ear */}
+                <circle cx="102" cy="74" r="10" fill="#354A3D" />
+                <circle cx="102" cy="74" r="6" fill="#829B83" opacity="0.6" />
+
+                {/* Tiny Front Paw Under Chin */}
+                <ellipse
+                  cx="128"
+                  cy="132"
+                  rx="4.5"
+                  ry="3"
+                  fill="#829B83"
+                  transform="rotate(-15 128 132)"
+                />
+
+                {/* Snout with Tiny Button Nose */}
+                <circle cx="147" cy="104" r="2.5" fill="#829B83" />
+
+                {/* Big Curious Eye with Highlight */}
+                <circle cx="126" cy="94" r="5" fill="#F5F1E8" />
+                <circle cx="127" cy="94" r="3.5" fill="#1E2822" />
+                <circle cx="125.5" cy="92.5" r="1.2" fill="#FFFFFF" />
+
+                {/* Delicate Whiskers */}
+                <path
+                  d="M 142 106 Q 158 104 168 105 M 140 109 Q 156 110 166 114"
+                  stroke="#829B83"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  opacity="0.8"
+                  fill="none"
+                />
               </svg>
             </div>
 
-            {/* 5. EAGLE */}
+            {/* 5. EAGLE PROFILE */}
             <div
-              className={`absolute inset-0 flex items-center justify-center transition-all duration-700 ease-out ${
+              className={`absolute inset-0 flex items-center justify-center transition-all duration-600 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                 stage === 'eagle'
-                  ? 'opacity-100 scale-100 translate-y-0 rotate-0'
-                  : 'opacity-0 scale-110 -translate-y-4 pointer-events-none'
+                  ? 'opacity-100 scale-100 translate-y-0'
+                  : 'opacity-0 scale-95 translate-y-2 pointer-events-none'
               }`}
             >
-              <svg
-                viewBox="0 0 200 200"
-                className="w-48 h-48 drop-shadow-lg text-[#354A3D] fill-current"
-              >
-                {/* Majestic Eagle with Wings Spread */}
-                <g>
-                  {/* Majestic Outstretched Wings */}
-                  <path
-                    d="M100 100 C80 75, 45 60, 20 65 C12 67, 16 78, 28 85 C42 92, 65 102, 85 110 Z"
-                    fill="#28392F"
-                  />
-                  <path
-                    d="M100 100 C120 75, 155 60, 180 65 C188 67, 184 78, 172 85 C158 92, 135 102, 115 110 Z"
-                    fill="#28392F"
-                  />
-                  {/* Primary Feathers Tips */}
-                  <path d="M20 65 L10 68 L25 76 L15 82 L32 87 Z" fill="#829B83" />
-                  <path d="M180 65 L190 68 L175 76 L185 82 L168 87 Z" fill="#829B83" />
-                  {/* Muscular Torso & Tail */}
-                  <path d="M92 95 C92 95, 88 140, 100 155 C112 140, 108 95, 108 95 Z" />
-                  {/* Tail Fan */}
-                  <path d="M92 148 L80 172 L100 165 L120 172 L108 148 Z" fill="#829B83" />
-                  {/* Proud Head */}
-                  <path d="M95 95 C95 85, 92 72, 100 65 C108 72, 105 85, 105 95 Z" fill="#F5F1E8" />
-                  {/* Golden Curved Hooked Beak */}
-                  <path d="M100 66 C105 66, 115 68, 118 73 C116 75, 108 76, 102 75 Z" fill="#D69738" />
-                  {/* Piercing Eye */}
-                  <circle cx="102" cy="70" r="2" fill="#1E2822" />
-                </g>
+              <svg viewBox="0 0 200 200" className="w-44 h-44 drop-shadow-sm overflow-visible">
+                <defs>
+                  <linearGradient id="eagleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#354A3D" />
+                    <stop offset="100%" stopColor="#25352C" />
+                  </linearGradient>
+                  <linearGradient id="beakGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#E2A64C" />
+                    <stop offset="100%" stopColor="#BA7D28" />
+                  </linearGradient>
+                </defs>
+
+                {/* Majestic Neck & Plumage in Profile */}
+                <path
+                  d="M 65 175 C 68 145 74 122 84 105 C 92 92 102 85 114 82 C 124 80 134 84 142 92 C 145 95 146 100 144 104 C 138 108 128 112 122 120 C 114 132 115 152 122 175 Z"
+                  fill="url(#eagleGrad)"
+                />
+
+                {/* Layered Crown Feathers at Nape */}
+                <path d="M 84 105 L 68 114 L 86 98 L 72 102 L 94 90 Z" fill="#829B83" />
+
+                {/* Powerful Curved Hooked Beak */}
+                <path
+                  d="M 132 86 C 142 86 154 90 160 98 C 166 106 166 118 158 126 C 156 128 153 124 154 118 C 154 110 148 104 138 102 Z"
+                  fill="url(#beakGrad)"
+                />
+
+                {/* Head & Brow Ridge Overhang */}
+                <path
+                  d="M 104 82 C 112 76 122 76 132 82 C 138 85 142 90 138 96 C 130 98 122 96 114 94 Z"
+                  fill="#354A3D"
+                />
+
+                {/* Intense Piercing Eye */}
+                <circle cx="120" cy="88" r="4.2" fill="#F5F1E8" />
+                <circle cx="120" cy="88" r="2.5" fill="#E2A64C" />
+                <circle cx="120.5" cy="88" r="1.4" fill="#1E2822" />
+
+                {/* Determined Brow Shadow */}
+                <path
+                  d="M 112 84 Q 124 82 128 86"
+                  stroke="#243329"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  fill="none"
+                />
               </svg>
             </div>
 
-            {/* 6. DISSOLVE PARTICLES BURST */}
+            {/* 6. DISSOLVE PARTICLE FLASH */}
             {stage === 'dissolve' && (
-              <div className="absolute inset-0 flex items-center justify-center animate-ping duration-1000">
-                <div className="w-24 h-24 rounded-full bg-[#829B83]/30 blur-md" />
+              <div className="absolute inset-0 flex items-center justify-center animate-ping duration-700">
+                <div className="w-20 h-20 rounded-full bg-[#829B83]/30 blur-md" />
               </div>
             )}
           </div>
         </div>
-
-        {/* Dynamic Animal Stage Name Tracker */}
-        <div className="mt-6 text-center h-8 flex items-center justify-center">
-          {stage === 'dog' && (
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#354A3D] animate-fade-in">
-              Cães • Companheirismo & Fidelidade
-            </span>
-          )}
-          {stage === 'bird' && (
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#354A3D] animate-fade-in">
-              Aves • Liberdade & Sensibilidade
-            </span>
-          )}
-          {stage === 'cat' && (
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#354A3D] animate-fade-in">
-              Gatos • Elegância & Singularidade
-            </span>
-          )}
-          {stage === 'hamster' && (
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#354A3D] animate-fade-in">
-              Pequenos Animais • Delicadeza & Afeto
-            </span>
-          )}
-          {stage === 'eagle' && (
-            <span className="text-xs font-semibold uppercase tracking-widest text-[#354A3D] animate-fade-in">
-              Silvestres • Majestade & Respeito à Natureza
-            </span>
-          )}
-        </div>
       </div>
 
-      {/* 7. Official Zeludi Logo & Tagline Revelation */}
+      {/* Official Zeludi Logo & Tagline Revelation */}
       <div
-        className={`relative z-10 w-full max-w-md text-center transition-all duration-1000 pb-8 ${
+        className={`relative z-10 w-full max-w-md text-center transition-all duration-600 pb-8 ${
           stage === 'logo' || stage === 'dissolve'
             ? 'opacity-100 translate-y-0 scale-100'
-            : 'opacity-0 translate-y-6 scale-95 pointer-events-none'
+            : 'opacity-0 translate-y-4 scale-95 pointer-events-none'
         }`}
       >
         {/* Zeludi Typography with Paw as the dot of "i" */}
@@ -480,21 +552,16 @@ export function SplashScreen({ onComplete, forceFull = false }: SplashScreenProp
         </div>
 
         {/* Philosophical Tagline */}
-        <p className="text-xs sm:text-sm font-medium text-[#596B60] mt-2 tracking-wide animate-fade-in">
+        <p className="text-xs sm:text-sm font-medium text-[#596B60] mt-2 tracking-wide">
           Cada pet é único. Cada cuidado importa.
         </p>
-
-        {/* Small subtle brand pill */}
-        <div className="inline-block mt-3 px-3 py-1 rounded-full bg-[#354A3D]/10 text-[10px] font-semibold tracking-widest uppercase text-[#354A3D]">
-          Saúde Preventiva Multi-espécies
-        </div>
       </div>
 
-      {/* Bottom Progress Bar */}
+      {/* Bottom Progress Bar: 5-second indication */}
       <div className="relative z-10 w-full max-w-xs pb-4">
         <div className="w-full bg-[#DCCBB5]/40 rounded-full h-1 overflow-hidden">
           <div
-            className="bg-[#354A3D] h-full transition-all duration-100 ease-out rounded-full"
+            className="bg-[#354A3D] h-full transition-all duration-75 ease-out rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>
