@@ -167,12 +167,15 @@ export default function NewPetPage() {
     } else {
       try {
         const weather = await fetchCurrentWeather()
-        const thermal = getThermalCareAndTreats(
+        const thermal = getThermalCareAndTreats({
           species,
-          weather.temperature,
+          temperature: weather.temperature,
           coatType,
-          weather.city
-        )
+          cityName: weather.city,
+          petName: name.trim(),
+          breed: isMixedBreed ? 'Sem Raça Definida (SRD)' : breed.trim() || undefined,
+          speciesCustom: species === 'other' ? speciesCustom.trim() : undefined,
+        })
         const savedPet: Pet = res.pet || ({
           ...petData,
           id: 'temp-' + Date.now(),
@@ -285,15 +288,20 @@ export default function NewPetPage() {
 
             {/* SECTION 1: CUIDADOS COM O PET DE ACORDO COM A TEMPERATURA */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#DCCBB5]/40 shadow-xs space-y-4">
-              <div className="flex items-center gap-2 text-[#354A3D]">
-                <ShieldCheck className="w-5 h-5 text-[#829B83]" />
-                <h2 className="text-lg font-bold">
-                  Cuidados Imediatos para {registeredPetAdvice.pet.name} nesta Temperatura ({registeredPetAdvice.weather.temperature}°C)
-                </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
+                <div className="flex items-center gap-2 text-[#354A3D]">
+                  <ShieldCheck className="w-5 h-5 text-[#829B83]" />
+                  <h2 className="text-lg font-bold">
+                    Cuidados Imediatos para {registeredPetAdvice.pet.name} ({registeredPetAdvice.thermal.speciesLabel}) nesta Temperatura ({registeredPetAdvice.weather.temperature}°C)
+                  </h2>
+                </div>
+                <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-[#829B83]/15 text-[#354A3D] text-[11px] font-bold tracking-wide">
+                  Exclusivo para {registeredPetAdvice.thermal.speciesLabel}
+                </span>
               </div>
               <p className="text-xs text-[#596B60]">
-                Diretrizes preventivas veterinárias personalizadas para a espécie (
-                {SPECIES_LABELS[registeredPetAdvice.pet.species]?.label}) e o clima local atual:
+                Diretrizes preventivas veterinárias formuladas exclusivamente para o organismo de {registeredPetAdvice.pet.name} (espécie {registeredPetAdvice.thermal.speciesLabel}
+                {registeredPetAdvice.pet.breed ? ` • ${registeredPetAdvice.pet.breed}` : ''}) sob a temperatura atual de {registeredPetAdvice.weather.temperature}°C:
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-2">
@@ -317,7 +325,7 @@ export default function NewPetPage() {
                 <Droplets className="w-5 h-5 text-[#4C885B] shrink-0 mt-0.5" />
                 <div>
                   <p className="text-xs font-bold text-[#354A3D]">
-                    Regra de Ouro da Hidratação
+                    Regra de Ouro da Hidratação para {registeredPetAdvice.thermal.speciesLabel}
                   </p>
                   <p className="text-xs text-[#596B60] mt-0.5 leading-relaxed">
                     {registeredPetAdvice.thermal.hydrationAdvice}
@@ -332,16 +340,16 @@ export default function NewPetPage() {
                 <div className="flex items-center gap-2 text-[#354A3D]">
                   <Cookie className="w-5 h-5 text-[#D49E58]" />
                   <h2 className="text-lg font-bold">
-                    Ideias de Petiscos Recomendados para {registeredPetAdvice.weather.temperature}°C
+                    Ideias de Petiscos para {registeredPetAdvice.pet.name} ({registeredPetAdvice.thermal.speciesLabel}) a {registeredPetAdvice.weather.temperature}°C
                   </h2>
                 </div>
                 <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold text-[#829B83]">
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Seguro & Nutritivo</span>
+                  <span>Exclusivo para {registeredPetAdvice.thermal.speciesLabel}</span>
                 </span>
               </div>
               <p className="text-xs text-[#596B60]">
-                Receitas e mimos funcionais adequados para a espécie de {registeredPetAdvice.pet.name} no clima de hoje:
+                Receitas e mimos funcionais adequados estritamente para o sistema biológico de {registeredPetAdvice.pet.name} ({registeredPetAdvice.thermal.speciesLabel}) no clima de hoje:
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
