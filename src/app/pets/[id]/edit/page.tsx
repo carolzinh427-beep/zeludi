@@ -13,6 +13,7 @@ import type {
 } from '@/types/database.types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { ImageUpload } from '@/components/ui/ImageUpload'
 import {
   PawPrint,
   ArrowLeft,
@@ -383,15 +384,11 @@ function EditPetContent() {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#354A3D] mb-1.5">
-                  URL da Foto
-                </label>
-                <input
-                  type="url"
-                  value={photoUrl}
-                  onChange={(e) => setPhotoUrl(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-2xl border border-[#DCCBB5]/70 text-sm text-[#354A3D] focus:outline-none focus:border-[#354A3D]"
+              <div className="sm:col-span-2 pt-2">
+                <ImageUpload
+                  value={photoUrl || null}
+                  onChange={(val) => setPhotoUrl(val || '')}
+                  label="Foto do Pet (Upload da Câmera ou Galeria)"
                 />
               </div>
             </div>
